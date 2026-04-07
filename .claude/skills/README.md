@@ -1,105 +1,49 @@
 # スキル
 
-スキルは Claude Code が文脈に基づいて読み込む知識モジュールです。ワークフロー定義とドメイン知識を含みます。
+このディレクトリには、このプロジェクトで利用する Claude Code の project skills を配置します。
 
-## スキルカテゴリ
+## 運用方針
 
-### 言語別パターン
-- `python-patterns/` - Python 設計パターン
-- `golang-patterns/` - Go 設計パターン
-- `frontend-patterns/` - React/Next.js パターン
-- `backend-patterns/` - API とデータベースパターン
+- `description` には「何をする skill か」だけでなく「いつ使うか」を具体的に書きます。
+- 自動で走ってほしくない手動ワークフローは `disable-model-invocation: true` を付けます。
+- 範囲が広い skill は対象技術、対象ファイル、除外条件を `description` や `paths` で制限します。
+- プロジェクト固有の実装ルールは skill ではなく [PROJECT.md](../PROJECT.md) を正とします。
 
-### 言語別テスト
-- `python-testing/` - Python テスト戦略
-- `golang-testing/` - Go テスト戦略
-- `cpp-testing/` - C++ テスト
+## 現在の skill 一覧
 
-### フレームワーク
-- `django-patterns/` - Django ベストプラクティス
-- `django-tdd/` - Django テスト駆動開発
-- `django-security/` - Django セキュリティ
-- `springboot-patterns/` - Spring Boot パターン
-- `springboot-tdd/` - Spring Boot テスト
-- `springboot-security/` - Spring Boot セキュリティ
+### 自動呼び出しされる skill
 
-### データベース
-- `postgres-patterns/` - PostgreSQL パターン
-- `jpa-patterns/` - JPA/Hibernate パターン
+- `flutter-patterns/` - `lib/**/*.dart` の実装時に使う Flutter/Dart パターン
+- `flutter-testing/` - `test/**/*.dart` と `integration_test/**/*.dart` のテスト作業で使う Flutter テストパターン
+- `backend-patterns/` - `functions/**` のサーバー側コードで使うバックエンド実装パターン
+- `postgres-patterns/` - SQL、migrations、RLS、クエリ性能調査で使う PostgreSQL パターン
+- `security-review/` - 認証、認可、シークレット、支払い、公開 API など高リスク変更時のセキュリティレビュー
 
-### セキュリティ
-- `security-review/` - セキュリティチェックリスト
-- `security-scan/` - セキュリティスキャン
+### 手動で呼び出す skill
 
-### ワークフロー
-- `tdd-workflow/` - テスト駆動開発ワークフロー
-- `continuous-learning/` - 継続的学習
+- `configure-ecc/` - ECC のインストール、再構成、修復を行う対話型インストーラー
+- `security-scan/` - `.claude` 設定を AgentShield で監査する手動スキャン
+- `strategic-compact/` - `/compact` の運用方針を決める手動ガイド
+- `tdd-workflow/` - TDD を明示したときだけ使う手動ワークフロー
+- `verification-loop/` - 実装後のビルド、lint、テスト、差分レビューをまとめる手動チェックリスト
 
-### ドメイン特定
-- `eval-harness/` - 評価ハーネス
-- `iterative-retrieval/` - 反復的検索
+## スキル追加時のチェック
 
-## スキル構造
+1. 自動呼び出しで問題ないかを先に決める。
+2. 手動専用なら `disable-model-invocation: true` を付ける。
+3. `description` の先頭に主要なユースケースを書く。
+4. 必要なら `paths` で対象ディレクトリや拡張子を絞る。
+5. 他の skill、agent、command と責務が重複しないか確認する。
 
-各スキルは自分のディレクトリに SKILL.md ファイルを含みます：
-
-```
-skills/
-├── python-patterns/
-│   └── SKILL.md          # 実装パターン、例、ベストプラクティス
-├── golang-testing/
-│   └── SKILL.md
-├── django-patterns/
-│   └── SKILL.md
-...
-```
-
-## スキルを使用します
-
-Claude Code はコンテキストに基づいてスキルを自動的に読み込みます。例：
-
-- Python ファイルを編集している場合 → `python-patterns` と `python-testing` が読み込まれる
-- Django プロジェクトの場合 → `django-*` スキルが読み込まれる
-- テスト駆動開発をしている場合 → `tdd-workflow` が読み込まれる
-
-## スキルの作成
-
-新しいスキルを作成するには：
-
-1. `skills/your-skill-name/` ディレクトリを作成
-2. `SKILL.md` ファイルを追加
-3. テンプレート：
+## テンプレート
 
 ```markdown
 ---
 name: your-skill-name
-description: Brief description shown in skill list
+description: 何をする skill か。いつ使うか。必要なら何を対象外にするか。
 ---
 
-# Your Skill Title
+# Skill Title
 
-Brief overview.
-
-## Core Concepts
-
-Key patterns and guidelines.
-
-## Code Examples
-
-\`\`\`language
-// Practical, tested examples
-\`\`\`
-
-## Best Practices
-
-- Actionable guideline 1
-- Actionable guideline 2
-
-## When to Use
-
-Describe scenarios where this skill applies.
+この skill が有効な場面と、従うべき手順や参照先を書く。
 ```
-
----
-
-**覚えておいてください**：スキルは参照資料です。実装ガイダンスを提供し、ベストプラクティスを示します。スキルとルールを一緒に使用して、高品質なコードを確認してください。

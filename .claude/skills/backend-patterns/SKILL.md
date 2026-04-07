@@ -1,11 +1,15 @@
 ---
 name: backend-patterns
-description: Backend architecture patterns, API design, database optimization, and server-side best practices for Node.js, Express, and Next.js API routes.
+description: Node.js、Express、Next.js API Routes、Firebase Functions などのサーバー側コードを実装・変更するときに使う。HTTP API 設計、サービス層、データアクセス構成に限定し、詳細な DB 最適化やセキュリティ監査は専用 skill に委ねる。
+paths:
+  - functions/**
 ---
 
 # バックエンド開発パターン
 
 スケーラブルなサーバーサイドアプリケーションのためのバックエンドアーキテクチャパターンとベストプラクティス。
+
+データベースの深い最適化は `postgres-patterns`、高リスク変更の監査は `security-review` を優先します。
 
 ## API設計パターン
 
@@ -29,29 +33,29 @@ GET /api/markets?status=active&sort=volume&limit=20&offset=0
 ```typescript
 // データアクセスロジックの抽象化
 interface MarketRepository {
-  findAll(filters?: MarketFilters): Promise<Market[]>
-  findById(id: string): Promise<Market | null>
-  create(data: CreateMarketDto): Promise<Market>
-  update(id: string, data: UpdateMarketDto): Promise<Market>
-  delete(id: string): Promise<void>
+  findAll(filters?: MarketFilters): Promise<Market[]>;
+  findById(id: string): Promise<Market | null>;
+  create(data: CreateMarketDto): Promise<Market>;
+  update(id: string, data: UpdateMarketDto): Promise<Market>;
+  delete(id: string): Promise<void>;
 }
 
 class SupabaseMarketRepository implements MarketRepository {
   async findAll(filters?: MarketFilters): Promise<Market[]> {
-    let query = supabase.from('markets').select('*')
+    let query = supabase.from("markets").select("*");
 
     if (filters?.status) {
-      query = query.eq('status', filters.status)
+      query = query.eq("status", filters.status);
     }
 
     if (filters?.limit) {
-      query = query.limit(filters.limit)
+      query = query.limit(filters.limit);
     }
 
-    const { data, error } = await query
+    const { data, error } = await query;
 
-    if (error) throw new Error(error.message)
-    return data
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   // その他のメソッド...
@@ -67,18 +71,18 @@ class MarketService {
 
   async searchMarkets(query: string, limit: number = 10): Promise<Market[]> {
     // ビジネスロジック
-    const embedding = await generateEmbedding(query)
-    const results = await this.vectorSearch(embedding, limit)
+    const embedding = await generateEmbedding(query);
+    const results = await this.vectorSearch(embedding, limit);
 
     // 完全なデータを取得
-    const markets = await this.marketRepo.findByIds(results.map(r => r.id))
+    const markets = await this.marketRepo.findByIds(results.map((r) => r.id));
 
     // 類似度でソート
     return markets.sort((a, b) => {
-      const scoreA = results.find(r => r.id === a.id)?.score || 0
-      const scoreB = results.find(r => r.id === b.id)?.score || 0
-      return scoreA - scoreB
-    })
+      const scoreA = results.find((r) => r.id === a.id)?.score || 0;
+      const scoreB = results.find((r) => r.id === b.id)?.score || 0;
+      return scoreA - scoreB;
+    });
   }
 
   private async vectorSearch(embedding: number[], limit: number) {
@@ -93,26 +97,26 @@ class MarketService {
 // リクエスト/レスポンス処理パイプライン
 export function withAuth(handler: NextApiHandler): NextApiHandler {
   return async (req, res) => {
-    const token = req.headers.authorization?.replace('Bearer ', '')
+    const token = req.headers.authorization?.replace("Bearer ", "");
 
     if (!token) {
-      return res.status(401).json({ error: 'Unauthorized' })
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
     try {
-      const user = await verifyToken(token)
-      req.user = user
-      return handler(req, res)
+      const user = await verifyToken(token);
+      req.user = user;
+      return handler(req, res);
     } catch (error) {
-      return res.status(401).json({ error: 'Invalid token' })
+      return res.status(401).json({ error: "Invalid token" });
     }
-  }
+  };
 }
 
 // 使用方法
 export default withAuth(async (req, res) => {
   // ハンドラーはreq.userにアクセス可能
-})
+});
 ```
 
 ## データベースパターン
@@ -122,36 +126,34 @@ export default withAuth(async (req, res) => {
 ```typescript
 // ✅ 良い: 必要な列のみを選択
 const { data } = await supabase
-  .from('markets')
-  .select('id, name, status, volume')
-  .eq('status', 'active')
-  .order('volume', { ascending: false })
-  .limit(10)
+  .from("markets")
+  .select("id, name, status, volume")
+  .eq("status", "active")
+  .order("volume", { ascending: false })
+  .limit(10);
 
 // ❌ 悪い: すべてを選択
-const { data } = await supabase
-  .from('markets')
-  .select('*')
+const { data } = await supabase.from("markets").select("*");
 ```
 
 ### N+1クエリ防止
 
 ```typescript
 // ❌ 悪い: N+1クエリ問題
-const markets = await getMarkets()
+const markets = await getMarkets();
 for (const market of markets) {
-  market.creator = await getUser(market.creator_id)  // Nクエリ
+  market.creator = await getUser(market.creator_id); // Nクエリ
 }
 
 // ✅ 良い: バッチフェッチ
-const markets = await getMarkets()
-const creatorIds = markets.map(m => m.creator_id)
-const creators = await getUsers(creatorIds)  // 1クエリ
-const creatorMap = new Map(creators.map(c => [c.id, c]))
+const markets = await getMarkets();
+const creatorIds = markets.map((m) => m.creator_id);
+const creators = await getUsers(creatorIds); // 1クエリ
+const creatorMap = new Map(creators.map((c) => [c.id, c]));
 
-markets.forEach(market => {
-  market.creator = creatorMap.get(market.creator_id)
-})
+markets.forEach((market) => {
+  market.creator = creatorMap.get(market.creator_id);
+});
 ```
 
 ### トランザクションパターン
@@ -200,30 +202,30 @@ $$;
 class CachedMarketRepository implements MarketRepository {
   constructor(
     private baseRepo: MarketRepository,
-    private redis: RedisClient
+    private redis: RedisClient,
   ) {}
 
   async findById(id: string): Promise<Market | null> {
     // 最初にキャッシュをチェック
-    const cached = await this.redis.get(`market:${id}`)
+    const cached = await this.redis.get(`market:${id}`);
 
     if (cached) {
-      return JSON.parse(cached)
+      return JSON.parse(cached);
     }
 
     // キャッシュミス - データベースから取得
-    const market = await this.baseRepo.findById(id)
+    const market = await this.baseRepo.findById(id);
 
     if (market) {
       // 5分間キャッシュ
-      await this.redis.setex(`market:${id}`, 300, JSON.stringify(market))
+      await this.redis.setex(`market:${id}`, 300, JSON.stringify(market));
     }
 
-    return market
+    return market;
   }
 
   async invalidateCache(id: string): Promise<void> {
-    await this.redis.del(`market:${id}`)
+    await this.redis.del(`market:${id}`);
   }
 }
 ```
@@ -232,21 +234,21 @@ class CachedMarketRepository implements MarketRepository {
 
 ```typescript
 async function getMarketWithCache(id: string): Promise<Market> {
-  const cacheKey = `market:${id}`
+  const cacheKey = `market:${id}`;
 
   // キャッシュを試す
-  const cached = await redis.get(cacheKey)
-  if (cached) return JSON.parse(cached)
+  const cached = await redis.get(cacheKey);
+  if (cached) return JSON.parse(cached);
 
   // キャッシュミス - DBから取得
-  const market = await db.markets.findUnique({ where: { id } })
+  const market = await db.markets.findUnique({ where: { id } });
 
-  if (!market) throw new Error('Market not found')
+  if (!market) throw new Error("Market not found");
 
   // キャッシュを更新
-  await redis.setex(cacheKey, 300, JSON.stringify(market))
+  await redis.setex(cacheKey, 300, JSON.stringify(market));
 
-  return market
+  return market;
 }
 ```
 
@@ -259,45 +261,54 @@ class ApiError extends Error {
   constructor(
     public statusCode: number,
     public message: string,
-    public isOperational = true
+    public isOperational = true,
   ) {
-    super(message)
-    Object.setPrototypeOf(this, ApiError.prototype)
+    super(message);
+    Object.setPrototypeOf(this, ApiError.prototype);
   }
 }
 
 export function errorHandler(error: unknown, req: Request): Response {
   if (error instanceof ApiError) {
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: error.statusCode })
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: error.statusCode },
+    );
   }
 
   if (error instanceof z.ZodError) {
-    return NextResponse.json({
-      success: false,
-      error: 'Validation failed',
-      details: error.errors
-    }, { status: 400 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Validation failed",
+        details: error.errors,
+      },
+      { status: 400 },
+    );
   }
 
   // 予期しないエラーをログに記録
-  console.error('Unexpected error:', error)
+  console.error("Unexpected error:", error);
 
-  return NextResponse.json({
-    success: false,
-    error: 'Internal server error'
-  }, { status: 500 })
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Internal server error",
+    },
+    { status: 500 },
+  );
 }
 
 // 使用方法
 export async function GET(request: Request) {
   try {
-    const data = await fetchData()
-    return NextResponse.json({ success: true, data })
+    const data = await fetchData();
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    return errorHandler(error, request)
+    return errorHandler(error, request);
   }
 }
 ```
@@ -307,29 +318,29 @@ export async function GET(request: Request) {
 ```typescript
 async function fetchWithRetry<T>(
   fn: () => Promise<T>,
-  maxRetries = 3
+  maxRetries = 3,
 ): Promise<T> {
-  let lastError: Error
+  let lastError: Error;
 
   for (let i = 0; i < maxRetries; i++) {
     try {
-      return await fn()
+      return await fn();
     } catch (error) {
-      lastError = error as Error
+      lastError = error as Error;
 
       if (i < maxRetries - 1) {
         // 指数バックオフ: 1秒、2秒、4秒
-        const delay = Math.pow(2, i) * 1000
-        await new Promise(resolve => setTimeout(resolve, delay))
+        const delay = Math.pow(2, i) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
 
-  throw lastError!
+  throw lastError!;
 }
 
 // 使用方法
-const data = await fetchWithRetry(() => fetchFromAPI())
+const data = await fetchWithRetry(() => fetchFromAPI());
 ```
 
 ## 認証と認可
@@ -337,84 +348,85 @@ const data = await fetchWithRetry(() => fetchFromAPI())
 ### JWTトークン検証
 
 ```typescript
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken";
 
 interface JWTPayload {
-  userId: string
-  email: string
-  role: 'admin' | 'user'
+  userId: string;
+  email: string;
+  role: "admin" | "user";
 }
 
 export function verifyToken(token: string): JWTPayload {
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload
-    return payload
+    const payload = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
+    return payload;
   } catch (error) {
-    throw new ApiError(401, 'Invalid token')
+    throw new ApiError(401, "Invalid token");
   }
 }
 
 export async function requireAuth(request: Request) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  const token = request.headers.get("authorization")?.replace("Bearer ", "");
 
   if (!token) {
-    throw new ApiError(401, 'Missing authorization token')
+    throw new ApiError(401, "Missing authorization token");
   }
 
-  return verifyToken(token)
+  return verifyToken(token);
 }
 
 // APIルートでの使用方法
 export async function GET(request: Request) {
-  const user = await requireAuth(request)
+  const user = await requireAuth(request);
 
-  const data = await getDataForUser(user.userId)
+  const data = await getDataForUser(user.userId);
 
-  return NextResponse.json({ success: true, data })
+  return NextResponse.json({ success: true, data });
 }
 ```
 
 ### ロールベースアクセス制御
 
 ```typescript
-type Permission = 'read' | 'write' | 'delete' | 'admin'
+type Permission = "read" | "write" | "delete" | "admin";
 
 interface User {
-  id: string
-  role: 'admin' | 'moderator' | 'user'
+  id: string;
+  role: "admin" | "moderator" | "user";
 }
 
-const rolePermissions: Record<User['role'], Permission[]> = {
-  admin: ['read', 'write', 'delete', 'admin'],
-  moderator: ['read', 'write', 'delete'],
-  user: ['read', 'write']
-}
+const rolePermissions: Record<User["role"], Permission[]> = {
+  admin: ["read", "write", "delete", "admin"],
+  moderator: ["read", "write", "delete"],
+  user: ["read", "write"],
+};
 
 export function hasPermission(user: User, permission: Permission): boolean {
-  return rolePermissions[user.role].includes(permission)
+  return rolePermissions[user.role].includes(permission);
 }
 
 export function requirePermission(permission: Permission) {
   return (handler: (request: Request, user: User) => Promise<Response>) => {
     return async (request: Request) => {
-      const user = await requireAuth(request)
+      const user = await requireAuth(request);
 
       if (!hasPermission(user, permission)) {
-        throw new ApiError(403, 'Insufficient permissions')
+        throw new ApiError(403, "Insufficient permissions");
       }
 
-      return handler(request, user)
-    }
-  }
+      return handler(request, user);
+    };
+  };
 }
 
 // 使用方法 - HOFがハンドラーをラップ
-export const DELETE = requirePermission('delete')(
-  async (request: Request, user: User) => {
-    // ハンドラーは検証済みの権限を持つ認証済みユーザーを受け取る
-    return new Response('Deleted', { status: 200 })
-  }
-)
+export const DELETE = requirePermission("delete")(async (
+  request: Request,
+  user: User,
+) => {
+  // ハンドラーは検証済みの権限を持つ認証済みユーザーを受け取る
+  return new Response("Deleted", { status: 200 });
+});
 ```
 
 ## レート制限
@@ -423,42 +435,45 @@ export const DELETE = requirePermission('delete')(
 
 ```typescript
 class RateLimiter {
-  private requests = new Map<string, number[]>()
+  private requests = new Map<string, number[]>();
 
   async checkLimit(
     identifier: string,
     maxRequests: number,
-    windowMs: number
+    windowMs: number,
   ): Promise<boolean> {
-    const now = Date.now()
-    const requests = this.requests.get(identifier) || []
+    const now = Date.now();
+    const requests = this.requests.get(identifier) || [];
 
     // ウィンドウ外の古いリクエストを削除
-    const recentRequests = requests.filter(time => now - time < windowMs)
+    const recentRequests = requests.filter((time) => now - time < windowMs);
 
     if (recentRequests.length >= maxRequests) {
-      return false  // レート制限超過
+      return false; // レート制限超過
     }
 
     // 現在のリクエストを追加
-    recentRequests.push(now)
-    this.requests.set(identifier, recentRequests)
+    recentRequests.push(now);
+    this.requests.set(identifier, recentRequests);
 
-    return true
+    return true;
   }
 }
 
-const limiter = new RateLimiter()
+const limiter = new RateLimiter();
 
 export async function GET(request: Request) {
-  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  const ip = request.headers.get("x-forwarded-for") || "unknown";
 
-  const allowed = await limiter.checkLimit(ip, 100, 60000)  // 100 req/分
+  const allowed = await limiter.checkLimit(ip, 100, 60000); // 100 req/分
 
   if (!allowed) {
-    return NextResponse.json({
-      error: 'Rate limit exceeded'
-    }, { status: 429 })
+    return NextResponse.json(
+      {
+        error: "Rate limit exceeded",
+      },
+      { status: 429 },
+    );
   }
 
   // リクエストを続行
@@ -471,31 +486,31 @@ export async function GET(request: Request) {
 
 ```typescript
 class JobQueue<T> {
-  private queue: T[] = []
-  private processing = false
+  private queue: T[] = [];
+  private processing = false;
 
   async add(job: T): Promise<void> {
-    this.queue.push(job)
+    this.queue.push(job);
 
     if (!this.processing) {
-      this.process()
+      this.process();
     }
   }
 
   private async process(): Promise<void> {
-    this.processing = true
+    this.processing = true;
 
     while (this.queue.length > 0) {
-      const job = this.queue.shift()!
+      const job = this.queue.shift()!;
 
       try {
-        await this.execute(job)
+        await this.execute(job);
       } catch (error) {
-        console.error('Job failed:', error)
+        console.error("Job failed:", error);
       }
     }
 
-    this.processing = false
+    this.processing = false;
   }
 
   private async execute(job: T): Promise<void> {
@@ -505,18 +520,18 @@ class JobQueue<T> {
 
 // マーケットインデックス作成用の使用方法
 interface IndexJob {
-  marketId: string
+  marketId: string;
 }
 
-const indexQueue = new JobQueue<IndexJob>()
+const indexQueue = new JobQueue<IndexJob>();
 
 export async function POST(request: Request) {
-  const { marketId } = await request.json()
+  const { marketId } = await request.json();
 
   // ブロッキングの代わりにキューに追加
-  await indexQueue.add({ marketId })
+  await indexQueue.add({ marketId });
 
-  return NextResponse.json({ success: true, message: 'Job queued' })
+  return NextResponse.json({ success: true, message: "Job queued" });
 }
 ```
 
@@ -526,60 +541,60 @@ export async function POST(request: Request) {
 
 ```typescript
 interface LogContext {
-  userId?: string
-  requestId?: string
-  method?: string
-  path?: string
-  [key: string]: unknown
+  userId?: string;
+  requestId?: string;
+  method?: string;
+  path?: string;
+  [key: string]: unknown;
 }
 
 class Logger {
-  log(level: 'info' | 'warn' | 'error', message: string, context?: LogContext) {
+  log(level: "info" | "warn" | "error", message: string, context?: LogContext) {
     const entry = {
       timestamp: new Date().toISOString(),
       level,
       message,
-      ...context
-    }
+      ...context,
+    };
 
-    console.log(JSON.stringify(entry))
+    console.log(JSON.stringify(entry));
   }
 
   info(message: string, context?: LogContext) {
-    this.log('info', message, context)
+    this.log("info", message, context);
   }
 
   warn(message: string, context?: LogContext) {
-    this.log('warn', message, context)
+    this.log("warn", message, context);
   }
 
   error(message: string, error: Error, context?: LogContext) {
-    this.log('error', message, {
+    this.log("error", message, {
       ...context,
       error: error.message,
-      stack: error.stack
-    })
+      stack: error.stack,
+    });
   }
 }
 
-const logger = new Logger()
+const logger = new Logger();
 
 // 使用方法
 export async function GET(request: Request) {
-  const requestId = crypto.randomUUID()
+  const requestId = crypto.randomUUID();
 
-  logger.info('Fetching markets', {
+  logger.info("Fetching markets", {
     requestId,
-    method: 'GET',
-    path: '/api/markets'
-  })
+    method: "GET",
+    path: "/api/markets",
+  });
 
   try {
-    const markets = await fetchMarkets()
-    return NextResponse.json({ success: true, data: markets })
+    const markets = await fetchMarkets();
+    return NextResponse.json({ success: true, data: markets });
   } catch (error) {
-    logger.error('Failed to fetch markets', error as Error, { requestId })
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    logger.error("Failed to fetch markets", error as Error, { requestId });
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 ```

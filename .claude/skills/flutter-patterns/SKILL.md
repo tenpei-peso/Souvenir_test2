@@ -1,6 +1,8 @@
 ---
 name: flutter-patterns
-description: Flutter + Dart 3 の汎用開発パターン。Dart 3 言語機能、Widget ベストプラクティス、パフォーマンス最適化。プロジェクト固有のアーキテクチャは PROJECT.md を参照。
+description: lib/ 配下の Flutter/Dart 実装を追加・変更するときに使う汎用パターン。Widget 設計、Dart 3 言語機能、パフォーマンス最適化を扱い、テスト専用作業は flutter-testing に委ねる。
+paths:
+  - lib/**/*.dart
 ---
 
 # Flutter 開発パターン（汎用）
@@ -13,6 +15,7 @@ Flutter + Dart 3 で高品質なアプリケーションを構築するための
 
 - Flutter/Dart コードを書くとき
 - パフォーマンス最適化時
+- テストのみが主目的ではない UI / 状態管理 / ドメイン実装を変更するとき
 
 ## PROJECT.md 参照ルール
 

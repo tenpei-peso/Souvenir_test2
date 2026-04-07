@@ -1,6 +1,7 @@
 ---
 name: configure-ecc
-description: Everything Claude Code のインタラクティブなインストーラー — スキルとルールの選択とインストールをユーザーレベルまたはプロジェクトレベルのディレクトリへガイドし、パスを検証し、必要に応じてインストールされたファイルを最適化します。
+description: Everything Claude Code をインストール、再構成、修復したいとユーザーが明示したときだけ使う対話型インストーラー。通常の開発タスクでは自動適用しない。
+disable-model-invocation: true
 ---
 
 # Configure Everything Claude Code (ECC)
@@ -17,6 +18,7 @@ Everything Claude Code プロジェクトのインタラクティブなステッ
 ## 前提条件
 
 このスキルは起動前に Claude Code からアクセス可能である必要があります。ブートストラップには2つの方法があります：
+
 1. **プラグイン経由**: `/plugin install everything-claude-code` — プラグインがこのスキルを自動的にロードします
 2. **手動**: このスキルのみを `~/.claude/skills/configure-ecc/SKILL.md` にコピーし、"configure ecc" と言って起動します
 
@@ -50,11 +52,13 @@ Options:
 ```
 
 選択を `INSTALL_LEVEL` として保存します。ターゲットディレクトリを設定します：
+
 - User-level: `TARGET=~/.claude`
 - Project-level: `TARGET=.claude`（現在のプロジェクトルートからの相対パス）
 - Both: `TARGET_USER=~/.claude`、`TARGET_PROJECT=.claude`
 
 ターゲットディレクトリが存在しない場合は作成します：
+
 ```bash
 mkdir -p $TARGET/skills $TARGET/rules
 ```
@@ -82,55 +86,56 @@ Options:
 
 **カテゴリ: Framework & Language（16スキル）**
 
-| スキル | 説明 |
-|-------|-------------|
-| `backend-patterns` | バックエンドアーキテクチャ、API設計、Node.js/Express/Next.js のサーバーサイドベストプラクティス |
-| `coding-standards` | TypeScript、JavaScript、React、Node.js の汎用コーディング標準 |
-| `django-patterns` | Django アーキテクチャ、DRF による REST API、ORM、キャッシング、シグナル、ミドルウェア |
-| `django-security` | Django セキュリティ: 認証、CSRF、SQL インジェクション、XSS 防止 |
-| `django-tdd` | pytest-django、factory_boy、モック、カバレッジによる Django テスト |
-| `django-verification` | Django 検証ループ: マイグレーション、リンティング、テスト、セキュリティスキャン |
-| `frontend-patterns` | React、Next.js、状態管理、パフォーマンス、UI パターン |
-| `golang-patterns` | 慣用的な Go パターン、堅牢な Go アプリケーションのための規約 |
-| `golang-testing` | Go テスト: テーブル駆動テスト、サブテスト、ベンチマーク、ファジング |
-| `java-coding-standards` | Spring Boot 用 Java コーディング標準: 命名、不変性、Optional、ストリーム |
-| `python-patterns` | Pythonic なイディオム、PEP 8、型ヒント、ベストプラクティス |
-| `python-testing` | pytest、TDD、フィクスチャ、モック、パラメータ化による Python テスト |
-| `springboot-patterns` | Spring Boot アーキテクチャ、REST API、レイヤードサービス、キャッシング、非同期 |
-| `springboot-security` | Spring Security: 認証/認可、検証、CSRF、シークレット、レート制限 |
-| `springboot-tdd` | JUnit 5、Mockito、MockMvc、Testcontainers による Spring Boot TDD |
-| `springboot-verification` | Spring Boot 検証: ビルド、静的解析、テスト、セキュリティスキャン |
+| スキル                    | 説明                                                                                            |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `backend-patterns`        | バックエンドアーキテクチャ、API設計、Node.js/Express/Next.js のサーバーサイドベストプラクティス |
+| `coding-standards`        | TypeScript、JavaScript、React、Node.js の汎用コーディング標準                                   |
+| `django-patterns`         | Django アーキテクチャ、DRF による REST API、ORM、キャッシング、シグナル、ミドルウェア           |
+| `django-security`         | Django セキュリティ: 認証、CSRF、SQL インジェクション、XSS 防止                                 |
+| `django-tdd`              | pytest-django、factory_boy、モック、カバレッジによる Django テスト                              |
+| `django-verification`     | Django 検証ループ: マイグレーション、リンティング、テスト、セキュリティスキャン                 |
+| `frontend-patterns`       | React、Next.js、状態管理、パフォーマンス、UI パターン                                           |
+| `golang-patterns`         | 慣用的な Go パターン、堅牢な Go アプリケーションのための規約                                    |
+| `golang-testing`          | Go テスト: テーブル駆動テスト、サブテスト、ベンチマーク、ファジング                             |
+| `java-coding-standards`   | Spring Boot 用 Java コーディング標準: 命名、不変性、Optional、ストリーム                        |
+| `python-patterns`         | Pythonic なイディオム、PEP 8、型ヒント、ベストプラクティス                                      |
+| `python-testing`          | pytest、TDD、フィクスチャ、モック、パラメータ化による Python テスト                             |
+| `springboot-patterns`     | Spring Boot アーキテクチャ、REST API、レイヤードサービス、キャッシング、非同期                  |
+| `springboot-security`     | Spring Security: 認証/認可、検証、CSRF、シークレット、レート制限                                |
+| `springboot-tdd`          | JUnit 5、Mockito、MockMvc、Testcontainers による Spring Boot TDD                                |
+| `springboot-verification` | Spring Boot 検証: ビルド、静的解析、テスト、セキュリティスキャン                                |
 
 **カテゴリ: Database（3スキル）**
 
-| スキル | 説明 |
-|-------|-------------|
-| `clickhouse-io` | ClickHouse パターン、クエリ最適化、分析、データエンジニアリング |
-| `jpa-patterns` | JPA/Hibernate エンティティ設計、リレーションシップ、クエリ最適化、トランザクション |
-| `postgres-patterns` | PostgreSQL クエリ最適化、スキーマ設計、インデックス作成、セキュリティ |
+| スキル              | 説明                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| `clickhouse-io`     | ClickHouse パターン、クエリ最適化、分析、データエンジニアリング                    |
+| `jpa-patterns`      | JPA/Hibernate エンティティ設計、リレーションシップ、クエリ最適化、トランザクション |
+| `postgres-patterns` | PostgreSQL クエリ最適化、スキーマ設計、インデックス作成、セキュリティ              |
 
 **カテゴリ: Workflow & Quality（8スキル）**
 
-| スキル | 説明 |
-|-------|-------------|
-| `continuous-learning` | セッションから再利用可能なパターンを学習済みスキルとして自動抽出 |
+| スキル                   | 説明                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `continuous-learning`    | セッションから再利用可能なパターンを学習済みスキルとして自動抽出             |
 | `continuous-learning-v2` | 信頼度スコアリングを持つ本能ベースの学習、スキル/コマンド/エージェントに進化 |
-| `eval-harness` | 評価駆動開発（EDD）のための正式な評価フレームワーク |
-| `iterative-retrieval` | サブエージェントコンテキスト問題のための段階的コンテキスト改善 |
-| `security-review` | セキュリティチェックリスト: 認証、入力、シークレット、API、決済機能 |
-| `strategic-compact` | 論理的な間隔で手動コンテキスト圧縮を提案 |
-| `tdd-workflow` | 80%以上のカバレッジで TDD を強制: ユニット、統合、E2E |
-| `verification-loop` | 検証と品質ループのパターン |
+| `eval-harness`           | 評価駆動開発（EDD）のための正式な評価フレームワーク                          |
+| `iterative-retrieval`    | サブエージェントコンテキスト問題のための段階的コンテキスト改善               |
+| `security-review`        | セキュリティチェックリスト: 認証、入力、シークレット、API、決済機能          |
+| `strategic-compact`      | 論理的な間隔で手動コンテキスト圧縮を提案                                     |
+| `tdd-workflow`           | 80%以上のカバレッジで TDD を強制: ユニット、統合、E2E                        |
+| `verification-loop`      | 検証と品質ループのパターン                                                   |
 
 **スタンドアロン**
 
-| スキル | 説明 |
-|-------|-------------|
+| スキル                       | 説明                                                 |
+| ---------------------------- | ---------------------------------------------------- |
 | `project-guidelines-example` | プロジェクト固有のスキルを作成するためのテンプレート |
 
 ### 2c: インストールの実行
 
 選択された各スキルについて、スキルディレクトリ全体をコピーします：
+
 ```bash
 cp -r $ECC_ROOT/skills/<skill-name> $TARGET/skills/
 ```
@@ -153,6 +158,7 @@ Options:
 ```
 
 インストールを実行：
+
 ```bash
 # 共通ルール（rules/ にフラットコピー）
 cp -r $ECC_ROOT/rules/common/* $TARGET/rules/
@@ -164,6 +170,7 @@ cp -r $ECC_ROOT/rules/golang/* $TARGET/rules/        # 選択された場合
 ```
 
 **重要**: ユーザーが言語固有のルールを選択したが、共通ルールを選択しなかった場合、警告します：
+
 > "言語固有のルールは共通ルールを拡張します。共通ルールなしでインストールすると、不完全なカバレッジになる可能性があります。共通ルールもインストールしますか？"
 
 ---
@@ -175,6 +182,7 @@ cp -r $ECC_ROOT/rules/golang/* $TARGET/rules/        # 選択された場合
 ### 4a: ファイルの存在確認
 
 インストールされたすべてのファイルをリストし、ターゲットロケーションに存在することを確認します：
+
 ```bash
 ls -la $TARGET/skills/
 ls -la $TARGET/rules/
@@ -183,6 +191,7 @@ ls -la $TARGET/rules/
 ### 4b: パス参照のチェック
 
 インストールされたすべての `.md` ファイルでパス参照をスキャンします：
+
 ```bash
 grep -rn "~/.claude/" $TARGET/skills/ $TARGET/rules/
 grep -rn "../common/" $TARGET/rules/
@@ -190,6 +199,7 @@ grep -rn "skills/" $TARGET/skills/
 ```
 
 **プロジェクトレベルのインストールの場合**、`~/.claude/` パスへの参照をフラグします：
+
 - スキルが `~/.claude/settings.json` を参照している場合 — これは通常問題ありません（設定は常にユーザーレベルです）
 - スキルが `~/.claude/skills/` または `~/.claude/rules/` を参照している場合 — プロジェクトレベルのみにインストールされている場合、これは壊れている可能性があります
 - スキルが別のスキルを名前で参照している場合 — 参照されているスキルもインストールされているか確認します
@@ -197,6 +207,7 @@ grep -rn "skills/" $TARGET/skills/
 ### 4c: スキル間の相互参照のチェック
 
 一部のスキルは他のスキルを参照します。これらの依存関係を検証します：
+
 - `django-tdd` は `django-patterns` を参照する可能性があります
 - `springboot-tdd` は `springboot-patterns` を参照する可能性があります
 - `continuous-learning-v2` は `~/.claude/homunculus/` ディレクトリを参照します
@@ -207,6 +218,7 @@ grep -rn "skills/" $TARGET/skills/
 ### 4d: 問題の報告
 
 見つかった各問題について、報告します：
+
 1. **ファイル**: 問題のある参照を含むファイル
 2. **行**: 行番号
 3. **問題**: 何が間違っているか（例: "~/.claude/skills/python-patterns を参照していますが、python-patterns がインストールされていません"）
@@ -228,6 +240,7 @@ Options:
 ```
 
 ### スキルを最適化する場合：
+
 1. インストールされた各 SKILL.md を読み取ります
 2. ユーザーにプロジェクトの技術スタックを尋ねます（まだ不明な場合）
 3. 各スキルについて、無関係なセクションの削除を提案します
@@ -235,6 +248,7 @@ Options:
 5. ステップ4で見つかったパスの問題を修正します
 
 ### ルールを最適化する場合：
+
 1. インストールされた各ルール .md ファイルを読み取ります
 2. ユーザーに設定について尋ねます：
    - テストカバレッジ目標（デフォルト80%）
@@ -285,14 +299,17 @@ rm -rf /tmp/everything-claude-code
 ## トラブルシューティング
 
 ### "スキルが Claude Code に認識されません"
+
 - スキルディレクトリに `SKILL.md` ファイルが含まれていることを確認します（単なる緩い .md ファイルではありません）
 - ユーザーレベルの場合: `~/.claude/skills/<skill-name>/SKILL.md` が存在するか確認します
 - プロジェクトレベルの場合: `.claude/skills/<skill-name>/SKILL.md` が存在するか確認します
 
 ### "ルールが機能しません"
+
 - ルールはフラットファイルで、サブディレクトリにはありません: `$TARGET/rules/coding-style.md`（正しい） vs `$TARGET/rules/common/coding-style.md`（フラットインストールでは不正）
 - ルールをインストール後、Claude Code を再起動します
 
 ### "プロジェクトレベルのインストール後のパス参照エラー"
+
 - 一部のスキルは `~/.claude/` パスを前提としています。ステップ4の検証を実行してこれらを見つけて修正します。
 - `continuous-learning-v2` の場合、`~/.claude/homunculus/` ディレクトリは常にユーザーレベルです — これは想定されており、エラーではありません。

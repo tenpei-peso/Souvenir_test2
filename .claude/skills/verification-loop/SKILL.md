@@ -1,18 +1,28 @@
+---
+name: verification-loop
+description: 実装後にビルド、lint、テスト、差分レビューをまとめて確認したいとユーザーが明示したときだけ使う手動チェックリスト。通常の実装中には自動適用しない。
+disable-model-invocation: true
+---
+
 # 検証ループスキル
 
-Claude Codeセッション向けの包括的な検証システム。
+Claude Code セッション向けの包括的な手動検証システム。
 
 ## 使用タイミング
 
-このスキルを呼び出す:
+このスキルを手動で呼び出す:
+
 - 機能または重要なコード変更を完了した後
 - PRを作成する前
 - 品質ゲートが通過することを確認したい場合
 - リファクタリング後
 
+現在のプロジェクトの技術スタックに合わせて、以下のコマンド例は適切なビルド・解析・テストコマンドに読み替えて使用します。
+
 ## 検証フェーズ
 
 ### フェーズ1: ビルド検証
+
 ```bash
 # プロジェクトがビルドできるか確認
 npm run build 2>&1 | tail -20
@@ -23,6 +33,7 @@ pnpm build 2>&1 | tail -20
 ビルドが失敗した場合、停止して続行前に修正。
 
 ### フェーズ2: 型チェック
+
 ```bash
 # TypeScriptプロジェクト
 npx tsc --noEmit 2>&1 | head -30
@@ -34,6 +45,7 @@ pyright . 2>&1 | head -30
 すべての型エラーを報告。続行前に重要なものを修正。
 
 ### フェーズ3: Lintチェック
+
 ```bash
 # JavaScript/TypeScript
 npm run lint 2>&1 | head -30
@@ -43,6 +55,7 @@ ruff check . 2>&1 | head -30
 ```
 
 ### フェーズ4: テストスイート
+
 ```bash
 # カバレッジ付きでテストを実行
 npm run test -- --coverage 2>&1 | tail -50
@@ -52,12 +65,14 @@ npm run test -- --coverage 2>&1 | tail -50
 ```
 
 報告:
+
 - 合計テスト数: X
 - 成功: X
 - 失敗: X
 - カバレッジ: X%
 
 ### フェーズ5: セキュリティスキャン
+
 ```bash
 # シークレットを確認
 grep -rn "sk-" --include="*.ts" --include="*.js" . 2>/dev/null | head -10
@@ -68,6 +83,7 @@ grep -rn "console.log" --include="*.ts" --include="*.tsx" src/ 2>/dev/null | hea
 ```
 
 ### フェーズ6: 差分レビュー
+
 ```bash
 # 変更内容を表示
 git diff --stat
@@ -75,6 +91,7 @@ git diff HEAD~1 --name-only
 ```
 
 各変更ファイルをレビュー:
+
 - 意図しない変更
 - 不足しているエラー処理
 - 潜在的なエッジケース
@@ -107,6 +124,7 @@ Lint:       [成功/失敗] (X警告)
 
 ```markdown
 メンタルチェックポイントを設定:
+
 - 各関数を完了した後
 - コンポーネントを完了した後
 - 次のタスクに移る前

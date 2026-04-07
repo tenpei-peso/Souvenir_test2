@@ -1,6 +1,9 @@
 ---
 name: flutter-testing
-description: Flutter の flutter_test + mocktail によるユニット/Widget テスト、integration_test による統合テスト、TDD ワークフローの汎用ベストプラクティス。プロジェクト固有のレイヤー別テスト戦略は PROJECT.md を参照。
+description: Flutter の unit test、widget test、integration test を書く・直すときに使う。実装全般には使わず、プロジェクト固有のレイヤー別テスト戦略は PROJECT.md を参照。
+paths:
+  - test/**/*.dart
+  - integration_test/**/*.dart
 ---
 
 # Flutter テスト（汎用）
@@ -13,6 +16,7 @@ Flutter + Dart でのテスト駆動開発と汎用テストパターン。
 
 - テストを書く/修正するとき
 - テストカバレッジの向上時
+- lib/ 実装そのものではなく、テスト設計やテストコードの更新が主タスクのとき
 
 ## テスト環境
 
