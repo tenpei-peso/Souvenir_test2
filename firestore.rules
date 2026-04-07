@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ユーザー認証状態
+    match /users/{userId} {
+      // ユーザー自身のみアクセス可能
+      allow read, write: if request.auth.uid == userId;
+
+      // お土産コレクション
+      match /my_souvenirs/{souvenirId} {
+        // ユーザー自身のみアクセス可能
+        allow read, write: if request.auth.uid == userId;
+
+        // バリデーション：作成・更新時
+        allow create: if request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 100
+          && request.resource.data.category is string
+          && request.resource.data.description is string
+          && request.resource.data.description.size() > 0
+          && request.resource.data.description.size() <= 500
+          && request.resource.data.price is number
+          && request.resource.data.price > 0
+          && request.resource.data.price <= 999999;
+
+        allow update: if request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 100
+          && request.resource.data.category is string
+          && request.resource.data.description is string
+          && request.resource.data.description.size() > 0
+          && request.resource.data.description.size() <= 500
+          && request.resource.data.price is number
+          && request.resource.data.price > 0
+          && request.resource.data.price <= 999999;
+      }
+    }
+
+    // その他のパスは禁止
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

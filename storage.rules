@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // ユーザーのフォルダ内のみアクセス可能
+    match /users/{userId}/{allPaths=**} {
+      allow read: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024  // 最大 5MB
+        && request.resource.contentType.matches('image/.*');  // 画像のみ
+    }
+
+    // その他のパスは禁止
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
